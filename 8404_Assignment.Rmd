@@ -1,0 +1,56 @@
+---
+title: "Assignmeant_8404"
+author: "SATISH"
+date: "11/4/2021"
+output: html_document
+---
+1  Cluster Analysis
+#Reading the dataset
+```{r}
+filename="C:/Users/pilla/Desktop/8404_Assignment/Ch10Ex11.csv"
+gexpr=read.csv(filename,header = FALSE)
+df=gexpr
+dim(df)
+```
+#Transpose the matrix #ecludian distance
+```{r}
+g=t(gexpr)
+dim(g)
+d2=dist(g)
+d2
+hc_c1=hclust(d2,method="complete")
+class(hc_c)
+plot(hc_c1,cex=0.5,main="",sub="",xlab="")
+```
+#Hierarchical clustering
+```{r}
+dim(df)
+r_obs=cor(df)
+
+d_cor=1-r_obs
+d1=as.dist(d_cor)
+```
+
+```{r}
+hc_c=hclust(d1,method = "single")
+class(hc_c)
+str(hc_c)
+```
+```{r}
+plot(hc_c,cex=0.5,mian="")
+```
+```{r}
+hc_c2=hclust(d1,method = "complete")
+plot(hc_c2,cex=0.5,mian="")
+```
+```{r}
+hc_c3=hclust(d1,method = "average")
+plot(hc_c3,cex=0.5,mian="")
+```
+
+```{r}
+d2=dist(g)
+hc_c2=hclust(d2,method = "single")
+plot(hc_c2,cex=0.5,mian="")
+```
+
