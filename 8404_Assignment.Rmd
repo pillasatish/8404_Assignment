@@ -53,4 +53,7 @@ d2=dist(g)
 hc_c2=hclust(d2,method = "single")
 plot(hc_c2,cex=0.5,mian="")
 ```
+```{r}
+satish
+```
 
