@@ -21,7 +21,6 @@ dim(g)
 ```{r}
 dim(df)
 r_obs=cor(df)
-
 d_cor=1-r_obs
 d1=as.dist(d_cor)
 ```
@@ -50,5 +49,27 @@ plot(hc_c3,cex=0.5,mian="")
 d2=dist(g)
 hc_c2=hclust(d2,method = "single")
 plot(hc_c2,cex=0.5,mian="")
+```
+2)K-means algorithm
+
+```{r}
+k=10
+SS_W=numeric(k)
+km_fit=list()
+for(i in 1:k){
+  km_fit[[i]]=kmeans(g,i,iter.max = 50,nstart = 20)
+  SS_W[i]=km_fit[[i]]$tot.withinss
+}
+  
+```
+
+```{r}
+plot(1:k, SS_W,type="l",xlab="K",ylab="SS_W")
+```
+
+```{r}
+plot(km_fit[[4]]$cluster)
+df=data.frame(km_fit[[4]]$cluster)
+df
 ```
 
