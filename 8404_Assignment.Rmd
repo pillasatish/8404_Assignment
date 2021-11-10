@@ -72,4 +72,8 @@ plot(km_fit[[4]]$cluster)
 df=data.frame(km_fit[[4]]$cluster)
 df
 ```
+#LOGISTIC REGRESSION
+```{r}
+
+```
 
