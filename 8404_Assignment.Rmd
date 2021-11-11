@@ -72,8 +72,26 @@ plot(km_fit[[4]]$cluster)
 df=data.frame(km_fit[[4]]$cluster)
 df
 ```
-#LOGISTIC REGRESSION
+#Linear Regression
 ```{r}
+library(nclSLR)
+data(diabetes)
+dim(diabetes)
+```
+#split the data into train and test data
+```{r}
+set.seed(12)
+train_data=diabetes[1:350,]
+test_data=diabetes[351:442,]
 
 ```
-
+#fitting the multiple linear regression model
+```{r}
+model1=lm(dis~.,data=train_data)
+summary(model1)
+#fitting training model on test set
+pred=predict(model1,newdata = test_data)
+#calculating MSE
+MSE=mean((test_data$dis-pred)^2)
+MSE
+```
