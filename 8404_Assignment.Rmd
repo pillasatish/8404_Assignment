@@ -91,7 +91,43 @@ model1=lm(dis~.,data=train_data)
 summary(model1)
 #fitting training model on test set
 pred=predict(model1,newdata = test_data)
+pred
 #calculating MSE
 MSE=mean((test_data$dis-pred)^2)
 MSE
 ```
+#apply the best subset selection algorithm on train_data
+```{r}
+library(leaps)
+bss_fit=regsubsets(dis~.,data=train_data,method="exhaustive",nvmax=11)
+bss_summary=summary(bss_fit)
+bss_summary
+str(bss_summary)
+coef(bss_fit,6)
+```   
+```{r}
+best_R=which.max(bss_summary$adjr2)
+best_R
+```
+```{r}
+best_cp=which.min(bss_summary$cp)
+best_cp
+```
+```{r}
+best_bic=which.min(bss_summary$bic)
+best_bic
+```
+```{r}
+train_data1=data.frame(train_data$sex,train_data$bmi,train_data$map,train_data$tc,train_data$hdl,train_data$ltg,train_data$dis)
+test_data1=data.frame(train_data$sex,train_data$bmi,train_data$map,train_data$tc,train_data$hdl,train_data$ltg,train_data$dis)
+model2=lm(train_data.dis~.,data=train_data1)
+pred1=predict(model2,newdata = test_data1)
+pred1
+MSE2=mean((test_data1$train_data.dis-pred1)^2)
+MSE2
+```
+#Rigid regression
+```{r}
+
+```
+
