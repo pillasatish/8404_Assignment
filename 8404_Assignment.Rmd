@@ -143,16 +143,23 @@ grid=10^seq(5,-3,length=100)
 head(train_data)
 X=train_data[,c(1:10)]
 X1=as.matrix(X)
-y=as.matrix(train_data$dis)
+y=train_data$dis
+y
 ridge_fit=glmnet(X1,y,aplha=0,standardize = FALSE,lambda = grid)
 plot(ridge_fit,xvar="lambda",col=1:10,label = TRUE)
 length(grid)
 bet=coef(ridge_fit)
+bet
 dim(bet)
 grid[1]
 bet[,1]
 ridge_cv_fit=cv.glmnet(X1,y,alpha=0,standardize=FALSE,lambda = grid)
+bet1=coef(ridge_cv_fit)
+dim(bet1)
+grid[1]
+bet1[,1]
 plot(ridge_cv_fit)
+
 ```
 #optimal value of the tuning parameter
 ```{r}
@@ -163,6 +170,46 @@ lambda_min
 i=which(ridge_cv_fit$lambda==ridge_cv_fit$lambda.min)
 i
 ridge_cv_fit$cvm[i]
-
+coef(ridge_cv_fit,s=lambda_min)
 ```
+```{r}
+X2=test_data[,1:10]
+pred3=predict(ridge_cv_fit,newx = as.matrix(X2),s=lambda_min)
+pred3
+MSE3=mean((test_data$dis-pred3)^2)
+MSE3
+```
+#Based on full dataset
+```{r}
+A=as.matrix(diabetes[,1:10])
+A
+b=diabetes$dis
+ridge_fit1=glmnet(A,b,alpha = 0,standardize = TRUE,lambda = grid)
+bet3=coef(ridge_fit1)
+dim(bet3)
+grid[1]
+bet3[,1]
+plot(ridge_fit1,xvar = "lambda",col=1:10,label = TRUE)
+ridge_cv_fit1=cv.glmnet(A,b,alpha=0,standardize=TRUE,lambda = grid)
+plot(ridge_cv_fit1)
+```
+#regression coefficients
+```{r}
+lambda_min1=ridge_cv_fit1$lambda.min
+lambda_min1
+i=which(ridge_cv_fit1$lambda==ridge_cv_fit1$lambda.min)
+i
+ridge_cv_fit$cvm[i]
+coef(ridge_cv_fit1,s=lambda_min)
+#summary(ridge)
+#ridge_fit1$lambda_min
+#bet4=coef(ridge_fit1,s=ridge_fit1$lambda.min)
 
+#bet4
+```
+#regression coefficients are age,sex,tc are tending towards zero
+#comapring with least least square method
+```{r}
+lsq_fit=lm(dis~.,data=diabetes)
+summary(lsq_fit)
+```
