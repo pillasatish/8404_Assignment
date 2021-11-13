@@ -81,13 +81,17 @@ dim(diabetes)
 #split the data into train and test data
 ```{r}
 set.seed(12)
-train_data=diabetes[1:350,]
-test_data=diabetes[351:442,]
+train_data=data.frame(scale(diabetes[1:350,]))
+test_data=data.frame(scale(diabetes[351:442,]))
+Mean=colMeans(train_data)
+Mean
+standard_dev=apply(train_data,2,sd)
+standard_dev
 
 ```
 #fitting the multiple linear regression model
 ```{r}
-model1=lm(dis~.,data=train_data)
+model1=lm(train_data$dis~.,data=train_data)
 summary(model1)
 #fitting training model on test set
 pred=predict(model1,newdata = test_data)
@@ -99,11 +103,12 @@ MSE
 #apply the best subset selection algorithm on train_data
 ```{r}
 library(leaps)
-bss_fit=regsubsets(dis~.,data=train_data,method="exhaustive",nvmax=11)
+bss_fit=regsubsets(train_data$dis~.,data=train_data,method="exhaustive",nvmax=10)
 bss_summary=summary(bss_fit)
 bss_summary
 str(bss_summary)
 coef(bss_fit,6)
+
 ```   
 ```{r}
 best_R=which.max(bss_summary$adjr2)
@@ -119,15 +124,45 @@ best_bic
 ```
 ```{r}
 train_data1=data.frame(train_data$sex,train_data$bmi,train_data$map,train_data$tc,train_data$hdl,train_data$ltg,train_data$dis)
-test_data1=data.frame(train_data$sex,train_data$bmi,train_data$map,train_data$tc,train_data$hdl,train_data$ltg,train_data$dis)
-model2=lm(train_data.dis~.,data=train_data1)
+colnames(train_data1)=c("sex","bmi","map","tc","hdl","ltg","dis")
+test_data1=data.frame(test_data$sex,test_data$bmi,test_data$map,test_data$tc,test_data$hdl,test_data$ltg,test_data$dis)
+colnames(test_data1)=c("sex","bmi","map","tc","hdl","ltg","dis")
+model2=lm(dis~.,data=train_data1)
 pred1=predict(model2,newdata = test_data1)
 pred1
-MSE2=mean((test_data1$train_data.dis-pred1)^2)
+MSE2=mean((test_data1$dis-pred1)^2)
 MSE2
 ```
 #Rigid regression
 ```{r}
+install.packages("glmnet",dependencies = TRUE)
+library(glmnet)
+```
+```{r}
+grid=10^seq(5,-3,length=100)
+head(train_data)
+X=train_data[,c(1:10)]
+X1=as.matrix(X)
+y=as.matrix(train_data$dis)
+ridge_fit=glmnet(X1,y,aplha=0,standardize = FALSE,lambda = grid)
+plot(ridge_fit,xvar="lambda",col=1:10,label = TRUE)
+length(grid)
+bet=coef(ridge_fit)
+dim(bet)
+grid[1]
+bet[,1]
+ridge_cv_fit=cv.glmnet(X1,y,alpha=0,standardize=FALSE,lambda = grid)
+plot(ridge_cv_fit)
+```
+#optimal value of the tuning parameter
+```{r}
+lambda_min=ridge_cv_fit$lambda.min
+lambda_min
+```
+```{r}
+i=which(ridge_cv_fit$lambda==ridge_cv_fit$lambda.min)
+i
+ridge_cv_fit$cvm[i]
 
 ```
 
