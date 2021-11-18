@@ -1,0 +1,189 @@
+---
+title: "Project_8404"
+author: "SATISH"
+date: "11/15/2021"
+output: html_document
+---
+
+
+#Exploratory Data Analysis
+#installing the necessary packages and data set
+```{r}
+install.packages("mlbench")
+library(mlbench)
+```
+
+#Loading the dataset Breast Cancer
+```{r}
+data("BreastCancer")
+```
+#checking the data size
+```{r}
+dim(BreastCancer)
+```
+#printing the first few rows for EDA
+```{r}
+head(BreastCancer)
+```
+#summmary of the dataset(Numerical summary)
+```{r}
+summary(BreastCancer)
+```
+#We see there are many null values in our dataset(BreastCancer), we need to omit the null values.
+#omiting the null values from the dataframe(BreastCancer)
+```{r}
+BreastCancer1=na.omit(BreastCancer)
+dim(BreastCancer1)
+```
+#coverting the data to numeric
+```{r}
+
+BreastCancer2=lapply(BreastCancer1,as.numeric)
+BreastCancer3=data.frame(BreastCancer2)
+BreastCancer3$Class[BreastCancer3$Class=="1"]=0
+BreastCancer3$Class[BreastCancer3$Class=="2"]=1
+head(BreastCancer3)
+```
+#Numerical Summary
+```{r}
+summary(BreastCancer3)
+```
+
+
+```{r}
+cor(BreastCancer3[2:11])
+chart.Correlation(BreastCancer3[, c(2:10)], histogram=TRUE, col="grey10", pch=1, main="Cancer Means")
+```
+
+
+```{r}
+pairs(BreastCancer3[,2:10],col=BreastCancer3[,11]+1)
+```
+#There is some evidence of a higher incidence of cancer being maligant when the cell size more than 3.
+#heat map
+```{r}
+tbl <- with(BreastCancer3, table(Class, Bare.nuclei))
+barplot(tbl, beside = TRUE, legend = TRUE)
+
+ggplot(as.data.frame(tbl), aes(Bare.nuclei, Freq, fill = Class)) +     
+  geom_col(position = 'dodge')
+
+
+
+```
+
+#No of women effected with benign and malignant stage
+#1 represent Benign and 2 represent maligant
+```{r}
+table(BreastCancer3$Class)
+```
+#Percentage of women effected with benign and maligant stage
+#65% percentage of women are effected with benign and 35% percentage are effected with maligant
+```{r}
+percentage=table(BreastCancer3$Class)/length(BreastCancer3$Class)
+ df1=as.data.frame(percentage*100)
+ df1
+```
+
+#Graphical summmary
+```{r}
+pie(df1$Freq,labels = df1[,2])
+
+```
+#Correlation Plot
+```{r}
+cor(BreastCancer3[2:11])
+chart.Correlation(BreastCancer3[, c(2:10)], histogram=TRUE, col="grey10", pch=1, main="Cancer Means")
+```
+#
+
+```{r}
+ggplot(BreastCancer3,aes(x=as.character(Class),y=Cl.thickness))+geom_boxplot()
+ggplot(BreastCancer3,aes(x=Class,fill=Cell.size))+geom_bar()
+```
+
+#Buliding classifers
+#Subset selection in logistic regression
+```{r}
+lr_fit=glm(BreastCancer3$Class~.,data = BreastCancer3,family ="binomial")
+summary(lr_fit)
+```
+#LASSO penalty
+```{r}
+grid=10^seq(-4,-1,length.out=100)
+lasso_CV_fit=cv.glmnet(as.matrix(BreastCancer3[,2:10]),BreastCancer3$Class,family="binomial",alpha=1,standardize=FALSE,lambda=grid,type.measure = "class")
+plot(lasso_fit,xvar = "lambda",col=rainbow(10),label = TRUE)
+```
+#Identifying the optimal value for the tuning paramater
+```{r}
+lambda_lasso_min=lasso_CV_fit$lambda.min
+lambda_lasso_min
+which_lambda_lasso=which(lasso_CV_fit$lambda==lambda_lasso_min)
+which_lambda_lasso
+```
+#the parameter estimates associated with optimal value of the tuning parameter
+```{r}
+coef(lasso_CV_fit,s=lambda_lasso_min)
+```
+
+#Discriminant analyis method,
+```{r}
+
+```
+#Calculate the training error
+```{r}
+1-mean(BreastCancer3$Class==yhat)
+```
+
+
+```{r}
+install.packages("tidyverse")
+install.packages("explore")
+library(tidyverse)
+library(explore)
+table(BreastCancer3$Class)
+BreastCancer3[2:11] %>%
+  explore_all(Cell.size,target=Class)
+
+BreastCancer3[2:11] %>%
+  explain_tree(target = Class)
+
+BreastCancer3[2:11] %>%
+  explore(Cell.size,Cell.shape,target=Class)
+```
+
+
+```{r}
+n=nrow(BreastCancer3)
+nfolds=10
+fold_index=sample(nfolds,n,replace = TRUE)
+reg_cv=function(X1,y,fold_ind)
+  {
+  Xy=data.frame(X1,y=y)
+  nfolds=max(fold_ind)
+  if(!all.equal(sort(unique(fold_ind)),1:nfolds))stop("Invalid fold partition.")
+  cv_errors=numeric(nfolds)
+  for(fold in 1:nfolds){
+    tmp_fit=lm(y~.,data=Xy[fold_ind!=fold,])
+    yhat=predict(tmp_fit, Xy[fold_ind==fold,])
+    yobs=y[fold_ind==fold]
+    cv_errors[fold]=mean((yobs-yhat)^2)
+  }
+  fold_sizes=numeric(nfolds)
+  for(fold in 1:nfolds)
+    fold_sizes[fold]=length(which(fold_ind==fold))
+  test_error=weighted.mean(cv_errors,w=fold_sizes)
+  return(test_error)
+}
+```
+
+
+```{r}
+
+```
+
+```{r}
+lsq_fi=reg_cv(BreastCancer3[,2:10],BreastCancer3[,11],fold_index)
+lsq_fi
+```
+
