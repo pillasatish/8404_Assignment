@@ -20,6 +20,7 @@ data("BreastCancer")
 #checking the data size
 ```{r}
 dim(BreastCancer)
+
 ```
 #printing the first few rows for EDA
 ```{r}
@@ -39,7 +40,7 @@ dim(BreastCancer1)
 ```{r}
 
 BreastCancer2=lapply(BreastCancer1,as.numeric)
-BreastCancer3=data.frame(BreastCancer2)
+BreastCancer3=data.frame(BreastCancer2[2:11])
 BreastCancer3$Class[BreastCancer3$Class=="1"]=0
 BreastCancer3$Class[BreastCancer3$Class=="2"]=1
 head(BreastCancer3)
@@ -49,34 +50,18 @@ head(BreastCancer3)
 summary(BreastCancer3)
 ```
 
-
+#correlation matirx
 ```{r}
-cor(BreastCancer3[2:11])
-chart.Correlation(BreastCancer3[, c(2:10)], histogram=TRUE, col="grey10", pch=1, main="Cancer Means")
+cor(BreastCancer3)
 ```
 
-
-```{r}
-pairs(BreastCancer3[,2:10],col=BreastCancer3[,11]+1)
-```
-#There is some evidence of a higher incidence of cancer being maligant when the cell size more than 3.
-#heat map
-```{r}
-tbl <- with(BreastCancer3, table(Class, Bare.nuclei))
-barplot(tbl, beside = TRUE, legend = TRUE)
-
-ggplot(as.data.frame(tbl), aes(Bare.nuclei, Freq, fill = Class)) +     
-  geom_col(position = 'dodge')
-
-
-
-```
 
 #No of women effected with benign and malignant stage
-#1 represent Benign and 2 represent maligant
+#0 represent Benign and 1 represent maligant
 ```{r}
 table(BreastCancer3$Class)
 ```
+
 #Percentage of women effected with benign and maligant stage
 #65% percentage of women are effected with benign and 35% percentage are effected with maligant
 ```{r}
@@ -87,87 +72,155 @@ percentage=table(BreastCancer3$Class)/length(BreastCancer3$Class)
 
 #Graphical summmary
 ```{r}
-pie(df1$Freq,labels = df1[,2])
+pie(df1$Freq,labels = df1[,2],main = "frequency of cancer diagnosis")
 
 ```
-#Correlation Plot
+#Scatter plot
 ```{r}
-cor(BreastCancer3[2:11])
-chart.Correlation(BreastCancer3[, c(2:10)], histogram=TRUE, col="grey10", pch=1, main="Cancer Means")
+pairs(BreastCancer3[1:9],col=BreastCancer3[,10]+1)
 ```
-#
-
+#bar graph representing the count of cancer being benign and malignant
 ```{r}
-ggplot(BreastCancer3,aes(x=as.character(Class),y=Cl.thickness))+geom_boxplot()
 ggplot(BreastCancer3,aes(x=Class,fill=Cell.size))+geom_bar()
+```
+#There is some evidence of a higher incidence of cancer being maligant when the cell size more than 3. we can see that by plotting the bar plot between class and Cell.size.
+```{r}
+
+tbl1=with(BreastCancer3, table(Class, Cell.size))
+ggplot(as.data.frame(tbl1), aes(Cell.size, Freq, fill = Class)) +     
+  geom_col(position = 'dodge')
+
+```
+#similarly if we apply plot for Cl.thickness and bare.nuclei we will see that when the Bare.nuclei is more than 3 there is higher incidence that cancer is malignant.
+```{r}
+tbl2 = with(BreastCancer3, table(Class, Bare.nuclei))
+ggplot(as.data.frame(tbl2), aes(Bare.nuclei, Freq, fill = Class)) +     
+  geom_col(position = 'dodge')
+```
+#When the Cl.thickness is greater than 5 there is higher evidence that the cancer is malignant.
+```{r}
+tbl3=with(BreastCancer3, table(Class, Cl.thickness))
+ggplot(as.data.frame(tbl3), aes(Cl.thickness, Freq, fill = Class)) +     
+  geom_col(position = 'dodge')
+```
+# while applying corr we see that there is strong relationship between Cl.thinkness and Cell.size and Class Plotting the scatter plot to see the relationship.
+```{r}
+
+ggplot(BreastCancer3,aes(Cl.thickness,(Cell.size),color=BreastCancer1$Class))+
+  geom_point(position="jitter")
 ```
 
 #Buliding classifers
-#Subset selection in logistic regression
+# logistic regression
 ```{r}
 lr_fit=glm(BreastCancer3$Class~.,data = BreastCancer3,family ="binomial")
-summary(lr_fit)
+lr_fit_summary=summary(lr_fit)
+lr_fit_summary
 ```
-#LASSO penalty
+#Cross validation on logistic regression for full dataset:
 ```{r}
-grid=10^seq(-4,-1,length.out=100)
-lasso_CV_fit=cv.glmnet(as.matrix(BreastCancer3[,2:10]),BreastCancer3$Class,family="binomial",alpha=1,standardize=FALSE,lambda=grid,type.measure = "class")
-plot(lasso_fit,xvar = "lambda",col=rainbow(10),label = TRUE)
-```
-#Identifying the optimal value for the tuning paramater
-```{r}
-lambda_lasso_min=lasso_CV_fit$lambda.min
-lambda_lasso_min
-which_lambda_lasso=which(lasso_CV_fit$lambda==lambda_lasso_min)
-which_lambda_lasso
-```
-#the parameter estimates associated with optimal value of the tuning parameter
-```{r}
-coef(lasso_CV_fit,s=lambda_lasso_min)
-```
-
-#Discriminant analyis method,
-```{r}
-
-```
-#Calculate the training error
-```{r}
-1-mean(BreastCancer3$Class==yhat)
-```
-
-
-```{r}
-install.packages("tidyverse")
-install.packages("explore")
-library(tidyverse)
-library(explore)
-table(BreastCancer3$Class)
-BreastCancer3[2:11] %>%
-  explore_all(Cell.size,target=Class)
-
-BreastCancer3[2:11] %>%
-  explain_tree(target = Class)
-
-BreastCancer3[2:11] %>%
-  explore(Cell.size,Cell.shape,target=Class)
-```
-
-
-```{r}
+set.seed(1)
 n=nrow(BreastCancer3)
 nfolds=10
 fold_index=sample(nfolds,n,replace = TRUE)
-reg_cv=function(X1,y,fold_ind)
+head(fold_index)
+lr_cv=function(X1,y,fold_ind)
   {
   Xy=data.frame(X1,y=y)
   nfolds=max(fold_ind)
   if(!all.equal(sort(unique(fold_ind)),1:nfolds))stop("Invalid fold partition.")
   cv_errors=numeric(nfolds)
   for(fold in 1:nfolds){
-    tmp_fit=lm(y~.,data=Xy[fold_ind!=fold,])
+    tmp_fit=glm(y~.,data=Xy[fold_ind!=fold,],family ="binomial")
+    phat_test_logistic = predict(tmp_fit, Xy[fold_ind==fold,], type = "response")
+    yhat_test_logistic = ifelse(phat_test_logistic > 0.5, 1, 0)
     yhat=predict(tmp_fit, Xy[fold_ind==fold,])
     yobs=y[fold_ind==fold]
-    cv_errors[fold]=mean((yobs-yhat)^2)
+    #cv_errors[fold]=mean((yobs-yhat)^2)
+    cv_errors[fold] = 1 - mean((yobs == yhat_test_logistic))
+  }
+  fold_sizes=numeric(nfolds)
+  for(fold in 1:nfolds)
+    fold_sizes[fold]=length(which(fold_ind==fold))
+  test_error=weighted.mean(cv_errors,w=fold_sizes)
+  return(test_error)
+}
+
+```
+
+#test error for logistic regression on full dataset
+```{r}
+test_error_lr=lr_cv(BreastCancer3[,1:9],BreastCancer3$Class,fold_index)
+test_error_lr
+```
+
+# Three method for subset selection in logistic regression
+```{r}
+library(bestglm)
+bss_fit_AIC=bestglm(BreastCancer3,family=binomial,IC="AIC")
+bss_fit_BIC=bestglm(BreastCancer3,family=binomial,IC="BIC")
+best_AIC=bss_fit_AIC$ModelReport$Bestk
+best_AIC
+best_BIC=bss_fit_BIC$ModelReport$Bestk
+best_BIC
+bss_fit_CV=bestglm(BreastCancer3,IC="CV",CVArgs=list(Method="HTF", K=10, REP=1))
+best_CV=bss_fit_CV$ModelReport$Bestk
+best_CV
+```
+#coefficients of the fitted model(BIC,AIC,CV)
+```{r}
+bss_fit_AIC
+bss_fit_BIC
+bss_fit_CV
+```
+
+
+# Produce plots, highlighting optimal value of k
+```{r}
+par(mfrow=c(1,3))
+plot(2:11, bss_fit_AIC$Subsets$AIC, xlab="Number of predictors", ylab="AIC", type="b")
+points(best_AIC, bss_fit_AIC$Subsets$AIC[best_AIC+1], col="red", pch=16)
+plot(2:11, bss_fit_BIC$Subsets$BIC, xlab="Number of predictors", ylab="BIC", type="b")
+points(best_BIC, bss_fit_BIC$Subsets$BIC[best_BIC+1], col="red", pch=16)
+plot(2:11, bss_fit_CV$Subsets$CV, xlab="Number of predictors", ylab="CV", type="b")
+points(best_CV, bss_fit_CV$Subsets$CV[best_CV+1], col="red", pch=16)
+```
+```{r}
+pstar=5
+bss_fit_BIC$Subsets[pstar+1,]
+```
+#the 5 varaibles are Cl.thickness,Marg.adhesion,Bare.nuclei,Bl.cromatin,Normal.nucleoli
+#creating the dataframe with 5 best Coefficients
+```{r}
+X1=BreastCancer3[1:9]
+#head(X1)
+y=BreastCancer3$Class
+(indices = as.logical(bss_fit_BIC$Subsets[pstar+1, 2:(9+1)]))
+## [1] FALSE TRUE FALSE FALSE FALSE FALSE
+BreastCancer4= data.frame(X1[,indices],y)
+head(BreastCancer4)
+X2=BreastCancer4[,1:5]
+#head(X2)
+y1=BreastCancer4[,6]
+```
+
+#Cross validation on best subset selection
+```{r}
+
+best_subset=function(X1,y,fold_ind)
+  {
+  Xy=data.frame(X1,y=y)
+  nfolds=max(fold_ind)
+  if(!all.equal(sort(unique(fold_ind)),1:nfolds))stop("Invalid fold partition.")
+  cv_errors=numeric(nfolds)
+  for(fold in 1:nfolds){
+    tmp_fit=glm(y~.,data=Xy[fold_ind!=fold,],family ="binomial")
+    phat_test_logistic = predict(tmp_fit, Xy[fold_ind==fold,], type = "response")
+    yhat_test_logistic = ifelse(phat_test_logistic > 0.5, 1, 0)
+    yhat=predict(tmp_fit, Xy[fold_ind==fold,])
+    yobs=y[fold_ind==fold]
+    #cv_errors[fold]=mean((yobs-yhat)^2)
+    cv_errors[fold] = 1 - mean((yobs == yhat_test_logistic))
   }
   fold_sizes=numeric(nfolds)
   for(fold in 1:nfolds)
@@ -176,14 +229,119 @@ reg_cv=function(X1,y,fold_ind)
   return(test_error)
 }
 ```
-
-
+#test Error
 ```{r}
-
+test_error_sb=best_subset(X2,y1,fold_index)
+test_error_sb
 ```
 
+# fititng the model with LASSO penalty
+#The effect of varying the tuning parameter in the logistic regression model with LASSO penalty for the Breast Cancer data
 ```{r}
-lsq_fi=reg_cv(BreastCancer3[,2:10],BreastCancer3[,11],fold_index)
-lsq_fi
+head(BreastCancer3)
+set.seed(1)
+grid=10^seq(-5,5,length.out=100)
+lasso_fit=glmnet(as.matrix(BreastCancer3[,1:9]),BreastCancer3$Class,family="binomial",alpha=1,standardize=FALSE,lambda=grid)
+plot(lasso_fit,xvar = "lambda",col=rainbow(10),label=TRUE)
+```
+
+#Cross-validation scores for the Breast cancer data using logistic regression with LASSO penalty.
+```{r}
+lasso_cv_fit=cv.glmnet(as.matrix(BreastCancer3[,1:9]),y=BreastCancer3$Class,family="binomial",alpha=1,standardize=FALSE,lambda=grid,type.measure = "class")
+plot(lasso_cv_fit,xvar = "lambda",col=rainbow(10),label = TRUE)
+```
+
+#Identifying the optimal value for the tuning paramater
+```{r}
+lambda_lasso_min=lasso_cv_fit$lambda.min
+lambda_lasso_min
+which_lambda_lasso=which(lasso_cv_fit$lambda==lambda_lasso_min)
+which_lambda_lasso
+```
+#Regression cofficients obtained by performing the lasso with choosen values of lambda minimum value are:
+```{r}
+coef(lasso_fit,s=lambda_lasso_min)
+```
+
+#test error for lasso method
+```{r}
+lasso_cv_fit2=cv.glmnet(as.matrix(BreastCancer3[,1:9]),y=BreastCancer3$Class,family="binomial",alpha=1,standardize=FALSE ,lambda=grid,type.measure = "class",foldid = fold_index)
+test_error_lasso=lasso_cv_fit2$cvm[which_lambda_lasso]
+test_error_lasso
+```
+
+#Bayes classifier for linear discriminant analysis (LDA)
+```{r}
+library(MASS)
+LDA_fit=lda(y~.,data = X1)
+LDA_fit
+```
+
+#test error for LDA using cross validation
+```{r}
+lda_cv=function(X1,y,fold_ind)
+  {
+  Xy=data.frame(X1,y=y)
+  nfolds=max(fold_ind)
+  if(!all.equal(sort(unique(fold_ind)),1:nfolds))stop("Invalid fold partition.")
+  cv_errors=numeric(nfolds)
+  for(fold in 1:nfolds){
+    tmp_fit=lda(Xy[fold_ind!=fold,]$y~.,data = Xy[fold_ind!=fold,][,-10])
+    #phat_test_logistic = predict(tmp_fit, Xy[fold_ind==fold,], type = "response")
+    #yhat_test_logistic = ifelse(phat_test_logistic > 0.5, 1, 0)
+    yhat=predict(tmp_fit, Xy[fold_ind==fold,][,-10])
+    yhat_lda=yhat$class
+    yobs=y[fold_ind==fold]
+    #cv_errors[fold]=mean((yobs-yhat)^2)
+    cv_errors[fold] = 1 - mean((yobs == yhat_lda))
+  }
+  fold_sizes=numeric(nfolds)
+  for(fold in 1:nfolds)
+    fold_sizes[fold]=length(which(fold_ind==fold))
+  test_error=weighted.mean(cv_errors,w=fold_sizes)
+  return(test_error)
+}
+head(fold_index)
+lda_test_error=lda_cv(X1,y,fold_index)
+lda_test_error
+```
+#Bayes classifier for quadritc disciminant analysis (QDA) 
+```{r}
+qda_fit=qda(y~.,data = X1)
+qda_fit
+```
+#Test error for QDA using cross validation
+```{r}
+qda_cv=function(X1,y,fold_ind)
+  {
+  Xy=data.frame(X1,y=y)
+  nfolds=max(fold_ind)
+  if(!all.equal(sort(unique(fold_ind)),1:nfolds))stop("Invalid fold partition.")
+  cv_errors=numeric(nfolds)
+  for(fold in 1:nfolds){
+    tmp_fit=qda(Xy[fold_ind!=fold,]$y~.,data = Xy[fold_ind!=fold,][,-10])
+    #phat_test_logistic = predict(tmp_fit, Xy[fold_ind==fold,], type = "response")
+    #yhat_test_logistic = ifelse(phat_test_logistic > 0.5, 1, 0)
+    yhat=predict(tmp_fit, Xy[fold_ind==fold,][,-10])
+    yhat_lda=yhat$class
+    yobs=y[fold_ind==fold]
+    #cv_errors[fold]=mean((yobs-yhat)^2)
+    cv_errors[fold] = 1 - mean((yobs == yhat_lda))
+  }
+  fold_sizes=numeric(nfolds)
+  for(fold in 1:nfolds)
+    fold_sizes[fold]=length(which(fold_ind==fold))
+  test_error=weighted.mean(cv_errors,w=fold_sizes)
+  return(test_error)
+}
+head(fold_index)
+qda_test_error=qda_cv(X1,y,fold_index)
+qda_test_error
+```
+#table to represent different test error for different methods
+```{r}
+df_table=data.frame(methods=c("logistic regression on full dataset","best subset selection ","LASSO","LDA","QDA"),
+                    Test_errors=c(test_error_lr,test_error_sb,test_error_lasso,lda_test_error,qda_test_error))
+df_table
 ```
 
